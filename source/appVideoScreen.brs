@@ -13,7 +13,7 @@
 '** error conditions so it's important to monitor these to
 '** understand what's going on, especially in the case of errors
 '***********************************************************
-Function showVideoScreen(episode As Object)
+Function showVideoScreen(episode as object, prevScreen as object)
 
     if type(episode) <> "roAssociativeArray" then
         print "invalid data passed to showVideoScreen"
@@ -48,8 +48,23 @@ Function showVideoScreen(episode As Object)
             else if msg.isButtonPressed()
                 print "Button pressed: "; msg.GetIndex(); " " msg.GetData()
             else if msg.isPlaybackPosition() then
+
                 nowpos = msg.GetIndex()
-                RegWrite(episode.ContentId, nowpos.toStr())
+
+                http = NewHttp( RegRead("MythRokuServerURL") + "/bookmark.php" )
+                http.AddParam( "act", "set" )
+                if episode.Recording then
+                    http.AddParam( "type",   "rec"             )
+                    http.AddParam( "chanid", episode.chanid    )
+                    http.AddParam( "start",  episode.starttime )
+                else
+                    http.AddParam( "type", "vid"              )
+                    http.AddParam( "intid", episode.ContentId )
+                end if
+                http.AddParam( "sec", nowpos.toStr() )
+
+                http.GetToStringWithRetry()
+
             else
                 print "Unexpected event type: "; msg.GetType()
             end if
@@ -57,6 +72,9 @@ Function showVideoScreen(episode As Object)
             print "Unexpected message class: "; type(msg)
         end if
     end while
+
+    'The bookmark position may have changed, so refresh the details screen.
+    refreshDetailScreen( prevScreen, episode )
 
 End Function
 

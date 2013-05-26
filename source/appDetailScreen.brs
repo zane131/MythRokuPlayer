@@ -83,25 +83,14 @@ function showDetailScreen( screen as object, prevScreen as object, showList as o
                 if msg.GetIndex() = 1 then
 
                     if not queryJobs( showList[showIndex] ) then
-
-                        'TODO: Consider getting the PlayStart from SQL database.
-                        '      This will allow for a universal bookmark that can be
-                        '      any frontend or Roku. Will require sending PlayStart
-                        '      information back to the MythBox.
-
-                        PlayStart = RegRead( showList[showIndex].ContentId )
-                        if PlayStart <> invalid then
-                            showList[showIndex].PlayStart = PlayStart.ToInt()
-                        end if
-                        showVideoScreen( showList[showIndex] )
-
+                        showVideoScreen( showList[showIndex], screen )
                     end if
 
                 else if msg.GetIndex() = 2 then
 
                     if not queryJobs( showList[showIndex] ) then
                         showList[showIndex].PlayStart = 0
-                        showVideoScreen( showList[showIndex] )
+                        showVideoScreen( showList[showIndex], screen )
                     end if
 
                 else if msg.GetIndex() = 7 then
@@ -208,8 +197,31 @@ function refreshDetailScreen( screen as object, item as object ) as integer
 
         screen.SetStaticRatingEnabled(true)
 
-' TODO: Only add resume button if there is a timestamp that is at least 30 seconds into the show.
-        screen.AddButton( 1, "Resume Playing" )
+        http = NewHttp( RegRead("MythRokuServerURL") + "/bookmark.php" )
+        http.AddParam( "act", "get" )
+        if item.Recording then
+            http.AddParam( "type",   "rec"          )
+            http.AddParam( "chanid", item.chanid    )
+            http.AddParam( "start",  item.starttime )
+        else
+            http.AddParam( "type",  "vid"          )
+            http.AddParam( "intid", item.ContentId )
+        end if
+
+        start = http.GetToStringWithRetry().ToInt()
+
+        ' If at the very end, reset play start.
+        percent = start / item.length
+        if percent > 0.95 then
+            start = 0
+        end if
+
+        if start <> 0 then
+            screen.AddButton( 1, "Resume Playing" )
+        end if
+
+        item.PlayStart = start
+
         screen.AddButton( 2, "Play from Beginning" )
 
         if item.Recording then

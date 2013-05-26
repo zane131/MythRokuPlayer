@@ -125,6 +125,17 @@ Additional Notes
 
     bind-address = 127.0.0.1
 
+3) Users have the ability to pause on one Roku/frontend and resume on another
+   Roku/frontend. One of the problems faced with this is that the Roku uses
+   seconds and MythTV uses frames for the bookmarks. The current implementation
+   uses the tool 'mp4info' to find the frame rate of a video. If a user does not
+   have this tool installed, the player will take it's best guess at the frame
+   rate, but it may not be very accurate. This tool can be installed as follows
+   (add where appropriate):
+
+    Ubuntu 12.04 (stable):
+        sudo apt-get install mp4v2-utils
+
 --------------------------------------------------------------------------------
 Debugging and troubleshooting
 --------------------------------------------------------------------------------
