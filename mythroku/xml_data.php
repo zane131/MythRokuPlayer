@@ -382,11 +382,23 @@ function build_data_array_rec( $db_field, $file )
     }
 
     $img_script = "$MythRokuDir/image.php?";
-    $imgs = array();
-    $imgs['poster'] = "$MythRokuDir/images/Mythtv_movie.png";
-    $imgs['screen'] = "$WebServer/tv/get_pixmap/${db_field['hostname']}/" .
-                      "${db_field['chanid']}/$str_time" .
-                      "/320/180/-1/${db_field['basename']}.png";
+    $hdimgs = array();
+    $sdimgs = array();
+
+    $tmp = array( 'get_pixmap' => "${db_field['hostname']}/" .
+                                  "${db_field['chanid']}/" .
+                                  "$str_time/${db_field['basename']}.png",
+                  'width'      => 290,
+                  'height'     => 218, );
+
+    $hdimgs['poster'] = "$MythRokuDir/images/Mythtv_movie.png";
+    $hdimgs['screen'] = $img_script . http_build_query($tmp);
+
+    $tmp['width']  = 214;
+    $tmp['height'] = 144;
+
+    $sdimgs['poster'] = $hdimgs['poster'];
+    $sdimgs['screen'] = $img_script . http_build_query($tmp);
 
     $stream = array(
         'bitrate'   => 0,
@@ -400,8 +412,8 @@ function build_data_array_rec( $db_field, $file )
         'itemId'       => $db_field['programid'],
         'title'        => $db_field['title'],
         'subtitle'     => $db_field['subtitle'],
-        'hdImgs'       => $imgs,
-        'sdImgs'       => $imgs,
+        'hdImgs'       => $hdimgs,
+        'sdImgs'       => $sdimgs,
         'synopsis'     => $db_field['description'],
         'contentType'  => $contentType,
         'episode'      => $episode,
@@ -443,12 +455,35 @@ function build_data_array_vid( $db_field )
     }
 
     $img_script = "$MythRokuDir/image.php?";
-    $imgs = array();
-    $tmp = array('group' => 'Coverart', 'file' => $db_field['coverfile']);
-    $imgs['poster'] = $img_script . http_build_query($tmp);
-    $tmp = array('group' => 'Screenshots', 'file' => $db_field['screenshot']);
-    $imgs['screen'] = ( 'movie' == $contentType )
-                          ? $imgs['poster']
+    $hdimgs = array();
+    $sdimgs = array();
+
+    $tmp = array( 'group'  => 'Coverart',
+                  'file'   => $db_field['coverfile'],
+                  'width'  => 214,
+                  'height' => 306, );
+    $hdimgs['poster'] = $img_script . http_build_query($tmp);;
+
+    $tmp = array( 'group'  => 'Screenshots',
+                  'file'   => $db_field['screenshot'],
+                  'width'  => 290,
+                  'height' => 218, );
+    $hdimgs['screen'] = ( 'movie' == $contentType )
+                          ? $hdimgs['poster']
+                          : $img_script . http_build_query($tmp);
+
+    $tmp = array( 'group'  => 'Coverart',
+                  'file'   => $db_field['coverfile'],
+                  'width'  => 158,
+                  'height' => 204, );
+    $sdimgs['poster'] = $img_script . http_build_query($tmp);;
+
+    $tmp = array( 'group'  => 'Screenshots',
+                  'file'   => $db_field['screenshot'],
+                  'width'  => 214,
+                  'height' => 144, );
+    $sdimgs['screen'] = ( 'movie' == $contentType )
+                          ? $sdimgs['poster']
                           : $img_script . http_build_query($tmp);
 
     $releasedate = convert_datetime($db_field['releasedate']);
@@ -468,8 +503,8 @@ function build_data_array_vid( $db_field )
         'itemId'       => $db_field['intid'],
         'title'        => $db_field['title'],
         'subtitle'     => $db_field['subtitle'],
-        'hdImgs'       => $imgs,
-        'sdImgs'       => $imgs,
+        'hdImgs'       => $hdimgs,
+        'sdImgs'       => $sdimgs,
         'synopsis'     => $db_field['plot'],
         'contentType'  => $contentType,
         'episode'      => $episode,
